@@ -1,70 +1,78 @@
 const { onCall } = require("firebase-functions/v2/https");
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-const { defineSecret } = require("firebase-functions/params");
 
-// Define secret for Gemini API key
-const geminiApiKey = defineSecret("GEMINI_API_KEY");
+// Simple text-only recommendations (fallback without Gemini)
+function getBasicRecommendations(disease, confidence) {
+  const recommendations = {
+    "Early Blight": {
+      overview: "Early blight is a common fungal disease affecting tomatoes and potatoes.",
+      actions: ["Remove affected leaves immediately", "Improve air circulation", "Apply copper-based fungicide", "Water at soil level, not on leaves"],
+      prevention: ["Rotate crops annually", "Use disease-resistant varieties", "Maintain proper spacing", "Remove plant debris"]
+    },
+    "Late Blight": {
+      overview: "Late blight is a serious fungal disease that can destroy entire crops quickly.",
+      actions: ["Remove infected plants immediately", "Apply fungicide preventively", "Improve drainage", "Avoid overhead watering"],
+      prevention: ["Plant certified disease-free seeds", "Ensure good air circulation", "Monitor weather conditions", "Remove volunteer plants"]
+    },
+    "Leaf Spot": {
+      overview: "Leaf spot diseases cause circular spots on leaves, reducing plant vigor.",
+      actions: ["Remove spotted leaves", "Apply organic fungicide", "Reduce humidity around plants", "Improve soil drainage"],
+      prevention: ["Space plants properly", "Water early morning", "Use mulch to prevent soil splash", "Choose resistant varieties"]
+    },
+    "Powdery Mildew": {
+      overview: "Powdery mildew appears as white powdery coating on leaves.",
+      actions: ["Spray with baking soda solution", "Improve air circulation", "Remove affected parts", "Apply sulfur-based fungicide"],
+      prevention: ["Avoid overcrowding plants", "Plant in sunny locations", "Water at soil level", "Choose resistant cultivars"]
+    },
+    "Healthy": {
+      overview: "Your plant appears healthy! Continue good care practices.",
+      actions: ["Monitor regularly for changes", "Maintain consistent watering", "Ensure proper nutrition", "Keep area clean"],
+      prevention: ["Continue current care routine", "Watch for early disease signs", "Maintain plant hygiene", "Provide adequate spacing"]
+    }
+  };
 
-// Initialize Gemini AI with environment variable
-const getGeminiAI = () => {
-  const apiKey = process.env.GEMINI_API_KEY || geminiApiKey.value();
-  if (!apiKey) {
-    throw new Error('Gemini API key not configured');
-  }
-  return new GoogleGenerativeAI(apiKey);
-}; // Replace with your actual API key
-
-// Generate comprehensive recommendations using Gemini AI only
-async function generateRecommendations(disease, confidence) {
-  const genAI = getGeminiAI();
-  const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+  const info = recommendations[disease] || recommendations["Leaf Spot"];
   
-  const prompt = `You are an agricultural education expert.
+  return `🔍 **Disease: ${disease}**
+📊 **Confidence: ${confidence}%**
 
-This content is for awareness and learning purposes only.
-Do NOT provide chemical dosages or brand names.
+📖 **Overview**
+${info.overview}
 
-Explain the plant disease "${disease}" (detected with ${confidence}% confidence) using the following structured format:
+🌱 **Immediate Actions**
+${info.actions.map(action => `• ${action}`).join('\n')}
 
-1. Disease Overview (detailed)
-2. Scientific Cause & Life Cycle
-3. Environmental Conditions Favoring Disease
-4. Symptoms (Early vs Advanced)
-5. Commonly Recommended Management Practices (non-prescriptive)
-6. Why These Practices Are Effective (scientific reasoning)
-7. Preventive Measures (best practices)
-8. Consequences If Ignored
-9. Learning Summary (key takeaways)
+🛡️ **Prevention Tips**
+${info.prevention.map(tip => `• ${tip}`).join('\n')}
 
-Return clear, detailed explanations under each section. Write comprehensive content with scientific accuracy for educational purposes. Each section should be thorough and informative to help users understand the disease and general management approaches.`;
-
-  const result = await model.generateContent(prompt);
-  const response = await result.response;
-  return response.text();
+⚠️ **Important Notes**
+• Monitor your plants daily for changes
+• Consult local agricultural experts for severe cases
+• This is AI-generated advice for educational purposes
+• Always follow local agricultural guidelines`;
 }
 
-exports.getPlantRecommendations = onCall(
-  { secrets: [geminiApiKey] },
-  async (request) => {
-  const { disease, confidence } = request.data;
-  
-  if (!disease) {
-    throw new Error('No disease information provided');
+exports.getPlantRecommendations = onCall(async (request) => {
+  try {
+    const { disease, confidence } = request.data;
+    
+    if (!disease) {
+      throw new Error('No disease provided');
+    }
+
+    console.log(`Getting recommendations for: ${disease} (${confidence}%)`);
+    
+    // Use basic recommendations (no external API needed)
+    const recommendations = getBasicRecommendations(disease, confidence);
+    
+    return {
+      success: true,
+      disease: disease,
+      confidence: confidence,
+      recommendations: recommendations,
+      isHealthy: disease.toLowerCase() === 'healthy'
+    };
+  } catch (error) {
+    console.error('Function error:', error);
+    throw new Error(`Failed: ${error.message}`);
   }
-
-  console.log(`Getting recommendations for: ${disease}`);
-  
-  const recommendations = await generateRecommendations(disease, confidence);
-  
-  const detailedRecommendations = `${recommendations}\n\n📊 DETECTION CONFIDENCE: ${confidence}%\n\n⚠️ DISCLAIMER: This is an AI-powered analysis. For serious plant health issues, consult with local agricultural experts or extension services.`;
-
-  console.log('SUCCESS! Gemini AI recommendations generated');
-
-  return {
-    success: true,
-    disease: disease,
-    confidence: confidence,
-    recommendations: detailedRecommendations,
-    isHealthy: disease.toLowerCase() === 'healthy'
-  };
 });
