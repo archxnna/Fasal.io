@@ -208,7 +208,45 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+## 🤝 Collaborators
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/noncreativehead">
+        <img src="https://github.com/noncreativehead.png"
+             width="80"
+             style="border-radius:50%;"
+             alt="noncreativehead"/>
+        <br />
+        <sub><b>noncreativehead</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/shreya-stack3">
+        <img src="https://github.com/shreya-stack3.png"
+             width="80"
+             style="border-radius:50%;"
+             alt="Shreya Shaw"/>
+        <br />
+        <sub><b>Shreya Shaw</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/sneha-266">
+        <img src="https://github.com/sneha-266.png"
+             width="80"
+             style="border-radius:50%;"
+             alt="sneha-266"/>
+        <br />
+        <sub><b>sneha-266</b></sub>
+      </a>
+    </td>
+  </tr>
+</table>
+
+> 💙 Special thanks to all collaborators for their valuable contributions to Fasal.io
+
 
 ## 📄 License
 
